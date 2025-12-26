@@ -90,6 +90,7 @@ uvicorn worker.worker:app --host 0.0.0.0 --port 28080
 - 方式 A（推荐）：访问 GitHub Pages 时加参数：
   - `?api=https://你的railway域名`
 - 方式 B：直接编辑 `web/index.html` 里的默认值，把 `https://YOUR-RAILWAY-DOMAIN` 改成你的域名
+  - 你当前示例域名：`https://testss.up.railway.app`
 
 然后：
 - 输入 **名字**（用于 txt 文件名）
