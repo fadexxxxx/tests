@@ -1,0 +1,22 @@
+node_modules/
+.DS_Store
+.env
+.env.*
+dist/
+coverage/
+.railway/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.log
+
+# temp ref clone
+_ref_tests/
+
+

@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>任务分发控制台</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --card: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --good: #22c55e;
+        --bad: #ef4444;
+        --warn: #f59e0b;
+        --btn: #3b82f6;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+        background: radial-gradient(1200px 600px at 20% -10%, #1b2a6b 0%, transparent 60%),
+          radial-gradient(900px 500px at 100% 0%, #3b0764 0%, transparent 55%),
+          radial-gradient(900px 500px at 60% 120%, #064e3b 0%, transparent 55%), var(--bg);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 18px 40px;
+      }
+      .title {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .title h1 {
+        font-size: 20px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+      .title .sub {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      @media (min-width: 920px) {
+        .grid {
+          grid-template-columns: 420px 1fr;
+          align-items: start;
+        }
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        backdrop-filter: blur(10px);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .field label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .field input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        outline: none;
+        background: rgba(0, 0, 0, 0.18);
+        color: var(--text);
+        box-sizing: border-box;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: var(--btn);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .pill {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+      }
+      .log {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 13px;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.86);
+      }
+      .kvs {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .kv {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.12);
+      }
+      .kv b {
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid var(--border);
+      }
+      .badge.good {
+        color: var(--good);
+        border-color: rgba(34, 197, 94, 0.4);
+      }
+      .badge.bad {
+        color: var(--bad);
+        border-color: rgba(239, 68, 68, 0.4);
+      }
+      .badge.warn {
+        color: var(--warn);
+        border-color: rgba(245, 158, 11, 0.4);
+      }
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .hr {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 12px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="title">
+        <h1>任务分发控制台</h1>
+        <div class="sub">通过 API 平均分配任务到多个本地 macOS worker（cloudflared tunnel 映射 28080）</div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="row">
+            <div class="field">
+              <label>名字（用于 txt 文件名）</label>
+              <input id="name" placeholder="例如：hello" />
+            </div>
+            <div class="field">
+              <label>数量（总任务数）</label>
+              <input id="count" placeholder="例如：10" inputmode="numeric" />
+            </div>
+            <div class="actions">
+              <button id="sendBtn">发送任务</button>
+              <span class="pill"
+                >API: <span class="mono" id="apiBase">同源</span> / Workers:
+                <span class="mono" id="workerCount">?</span></span
+              >
+            </div>
+            <div class="small">
+              提示：如果没有 worker，请先在 Railway 设置环境变量 <span class="mono">WORKERS</span>（JSON/逗号分隔 URL），或调用
+              <span class="mono">POST /api/workers/register</span> 注册 cloudflared 公网地址。
+            </div>
+          </div>
+          <div class="hr"></div>
+          <div class="small">已注册 worker 列表（只读）：</div>
+          <div id="workersList" class="kvs"></div>
+        </div>
+
+        <div class="card">
+          <div class="log" id="log">等待发送…</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      // GitHub Pages 下通常是跨域调用 Railway API：
+      // 方式1：在 URL 上带参数 ?api=https://xxxx.up.railway.app
+      // 方式2：直接在下面默认值里写死你的 Railway 域名
+      const apiBase =
+        new URLSearchParams(location.search).get("api")?.replace(/\/+$/, "") ||
+        "https://YOUR-RAILWAY-DOMAIN";
+      $("apiBase").textContent = apiBase;
+
+      let taskNo = 0;
+
+      function ms(ms) {
+        if (ms == null) return "-";
+        return `${ms} ms`;
+      }
+
+      function setLog(obj) {
+        $("log").textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+      }
+
+      async function fetchJSON(url, options) {
+        const res = await fetch(url, options);
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          const msg = data && data.error ? data.error : `HTTP ${res.status}`;
+          throw new Error(msg);
+        }
+        return data;
+      }
+
+      function renderWorkers(workers) {
+        $("workerCount").textContent = String(workers.length);
+        const box = $("workersList");
+        box.innerHTML = "";
+        if (!workers.length) {
+          box.innerHTML = `<div class="kv"><span>暂无</span><span class="badge warn">0</span></div>`;
+          return;
+        }
+        for (const w of workers) {
+          const el = document.createElement("div");
+          el.className = "kv";
+          el.innerHTML = `
+            <div>
+              <b>${escapeHtml(w.label || w.id)}</b>
+              <div class="small mono">${escapeHtml(w.url)}</div>
+            </div>
+            <span class="badge">${escapeHtml(w.source || "register")}</span>
+          `;
+          box.appendChild(el);
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      async function refreshWorkers() {
+        try {
+          const data = await fetchJSON(`${apiBase}/api/workers`);
+          renderWorkers(data.workers || []);
+        } catch (e) {
+          $("workerCount").textContent = "?";
+          $("workersList").innerHTML = `<div class="kv"><span>读取失败</span><span class="badge bad">${escapeHtml(
+            e.message
+          )}</span></div>`;
+        }
+      }
+
+      async function sendTask() {
+        const name = $("name").value.trim();
+        const count = Number($("count").value);
+        if (!name) return alert("名字不能为空");
+        if (!Number.isFinite(count) || count <= 0) return alert("数量必须是大于0的数字");
+
+        const btn = $("sendBtn");
+        btn.disabled = true;
+
+        taskNo += 1;
+        setLog(`任务${taskNo} 已创建，正在下发…`);
+
+        try {
+          const data = await fetchJSON(`${apiBase}/api/tasks`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ name, count }),
+          });
+
+          const lines = [];
+          lines.push(`任务${taskNo} 已完成`);
+          lines.push(`任务ID: ${data.taskId}`);
+          lines.push(`可用服务器数量: ${data.availableServers}`);
+          lines.push("");
+          lines.push("每个服务器分配的任务数量:");
+          for (const x of data.perServerAssigned || []) {
+            lines.push(`- ${x.label || x.workerId}: ${x.assignedCount}`);
+          }
+          lines.push("");
+          lines.push("每个服务器完成用时与结果(汇总):");
+          for (const w of data.perWorker || []) {
+            const badge = w.ok ? "成功" : "失败";
+            const created = w.result && w.result.created != null ? w.result.created : 0;
+            const folder = w.result && w.result.folder ? w.result.folder : "-";
+            const msg = w.ok ? "" : ` 错误: ${w.error || w.result?.error || "未知"}`;
+            lines.push(
+              `- ${w.label} (${badge}) 分配:${w.assignedCount} 用时:${ms(w.elapsedMs)} 创建:${created} 文件夹:${folder}${msg}`
+            );
+          }
+          lines.push("");
+          lines.push(`任务最终结果: 总创建文件数=${data.final?.createdTotal ?? "-"}`);
+          lines.push(`总用时: ${ms(data.final?.totalElapsedMs)}`);
+          setLog(lines.join("\n"));
+        } catch (e) {
+          setLog(`任务${taskNo} 失败: ${e.message}`);
+        } finally {
+          btn.disabled = false;
+          refreshWorkers();
+        }
+      }
+
+      $("sendBtn").addEventListener("click", sendTask);
+      refreshWorkers();
+    </script>
+  </body>
+</html>
+
+
